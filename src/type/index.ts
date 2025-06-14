@@ -1,0 +1,1 @@
+export type { PrototypeOf } from './prototype-of.type';
