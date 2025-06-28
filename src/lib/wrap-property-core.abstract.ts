@@ -33,17 +33,20 @@ export abstract class WrapPropertyCore<
     {
       configurable,
       enumerable,
+      get,
       onGet,
       onSet,
       privateKey,
+      set,
     }: {
       configurable?: boolean,
       enumerable?: boolean,
+      get?: PropertyDescriptor['get'],
       onGet?: GetterCallback<T, K>,
       onSet?: SetterCallback<T, K>,
       privateKey?: PropertyKey,
+      set?: PropertyDescriptor['set'],
     } = {},
-    { set, get }: { set?: PropertyDescriptor['set'], get?: PropertyDescriptor['get'] } = {},
   ) {
     const object = (typeof target === 'function' ? target.prototype : target) as T;
 
@@ -69,11 +72,12 @@ export abstract class WrapPropertyCore<
       key, {
         configurable,
         enumerable,
+        get,
         onGet,
-        privateKey,
         onSet,
+        privateKey,
+        set, 
       },
-      { set, get }
     );
   }
 
@@ -83,17 +87,20 @@ export abstract class WrapPropertyCore<
     key: K, {
       configurable,
       enumerable,
+      get,
       onGet,
-      privateKey,
       onSet,
+      privateKey,
+      set,
     }: {
       configurable?: boolean,
       enumerable?: boolean,
+      get?: PropertyDescriptor['get'],
       onGet?: GetterCallback<T, K>,
-      privateKey?: PropertyKey,
       onSet?: SetterCallback<T, K>,
+      privateKey?: PropertyKey,
+      set?: PropertyDescriptor['set'],
     } = {},
-    { set, get }: { set?: PropertyDescriptor['set'], get?: PropertyDescriptor['get'] } = {},
   ): this {
     const previousDescriptor = Object.getOwnPropertyDescriptor(object, key);
 
