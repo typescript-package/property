@@ -1,20 +1,20 @@
 // Abstract.
-import { WrapPropertyCore } from './wrap-property-core.abstract';
+import { WrapPropertyBase } from './wrap-property-base.class ';
 // Type.
 import { GetterCallback, SetterCallback } from '@typedly/callback';
 import { PrototypeOf } from '../../type';
 
 export class WrapProperty<
-  Target extends object | (new () => any),
-  T extends Record<PropertyKey, any> = (Target extends new () => any ? PrototypeOf<Target> : Target),
-  K extends keyof T extends string | symbol
-  ? keyof T
-  : never = keyof T extends string | symbol
-    ? keyof T
+  T extends object | (new () => any),
+  O extends Record<PropertyKey, any> = (T extends new () => any ? PrototypeOf<T> : T),
+  K extends keyof O extends string | symbol
+  ? keyof O
+  : never = keyof O extends string | symbol
+    ? keyof O
     : never,
-> extends WrapPropertyCore<Target, T, K> {
+> extends WrapPropertyBase<T, O, K> {
   constructor(
-    target: Target,
+    target: T,
     key: K,
     {
       configurable,
@@ -25,8 +25,8 @@ export class WrapProperty<
     }: {
       configurable?: boolean,
       enumerable?: boolean,
-      onGet?: GetterCallback<T, K>,
-      onSet?: SetterCallback<T, K>,
+      onGet?: GetterCallback<O, K>,
+      onSet?: SetterCallback<O, K>,
       privateKey?: PropertyKey,
     } = {},
   ) {
@@ -34,6 +34,18 @@ export class WrapProperty<
       target,
       key,
       { configurable, enumerable, onGet, onSet, privateKey },
+    );
+
+    // Define the property with the given key and options.
+    this.wrap(
+      (typeof target === 'function' ? target.prototype : target) as O,
+      key, {
+        configurable,
+        enumerable,
+        onGet,
+        onSet,
+        privateKey,
+      },
     );
   }
 }
