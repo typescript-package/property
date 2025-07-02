@@ -1,8 +1,9 @@
 // Abstract.
 import { WrapPropertyBase } from './wrap-property-base.abstract';
 // Type.
-import { GetterCallback, SetterCallback } from '@typedly/callback';
 import { PrototypeOf } from '../../type';
+// Interface.
+import { WrappedPropertyDescriptor } from '../interface';
 
 export class WrapProperty<
   T extends object | (new () => any),
@@ -22,13 +23,7 @@ export class WrapProperty<
       onGet,
       onSet,
       privateKey,
-    }: {
-      configurable?: boolean,
-      enumerable?: boolean,
-      onGet?: GetterCallback<O, K>,
-      onSet?: SetterCallback<O, K>,
-      privateKey?: PropertyKey,
-    } = {},
+    }: WrappedPropertyDescriptor<O, K> = {},
   ) {
     super(
       target,
