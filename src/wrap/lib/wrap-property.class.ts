@@ -1,5 +1,5 @@
 // Abstract.
-import { WrapPropertyBase } from './wrap-property-base.class ';
+import { WrapPropertyBase } from './wrap-property-base.abstract';
 // Type.
 import { GetterCallback, SetterCallback } from '@typedly/callback';
 import { PrototypeOf } from '../../type';
