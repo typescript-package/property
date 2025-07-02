@@ -1,8 +1,9 @@
 // Abstract.
 import { WrapPropertyCore } from './wrap-property-core.abstract';
 // Type.
-import { GetterCallback, SetterCallback } from '@typedly/callback';
 import { PrototypeOf } from '../../type';
+// Interface.
+import { WrappedPropertyDescriptor } from '../interface';
 
 export class WrapPropertyBase<
   T extends object | (new () => any),
@@ -27,10 +28,9 @@ export class WrapPropertyBase<
   }
 
   #key: K;
+  #previousDescriptor?: PropertyDescriptor;
   #privateKey: PropertyKey;
   #target: T;
-
-  #previousDescriptor?: PropertyDescriptor;
 
   constructor(
     target: T,
@@ -41,13 +41,7 @@ export class WrapPropertyBase<
       onGet,
       onSet,
       privateKey,
-    }: {
-      configurable?: boolean,
-      enumerable?: boolean,
-      onGet?: GetterCallback<O, K>,
-      onSet?: SetterCallback<O, K>,
-      privateKey?: PropertyKey,
-    } = {},
+    }: WrappedPropertyDescriptor<O, K> = {},
   ) {
     super(
       target,
@@ -89,13 +83,7 @@ export class WrapPropertyBase<
       onGet,
       onSet,
       privateKey,
-    }: {
-      configurable?: boolean,
-      enumerable?: boolean,
-      onGet?: GetterCallback<O, K>,
-      onSet?: SetterCallback<O, K>,
-      privateKey?: PropertyKey,
-    } = {},
+    }: WrappedPropertyDescriptor<O, K> = {},
   ): this {
     // Get the previous descriptor of the property.
     const previousDescriptor = this.getPreviousDescriptor(object, key);
