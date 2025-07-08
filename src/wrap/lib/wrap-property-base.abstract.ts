@@ -1,19 +1,16 @@
 // Abstract.
 import { WrapPropertyCore } from './wrap-property-core.abstract';
-// Type.
-import { PrototypeOf } from '../../type';
 // Interface.
 import { WrappedPropertyDescriptor } from '../interface';
 
-export class WrapPropertyBase<
+export abstract class WrapPropertyBase<
   T extends object | (new () => any),
-  O extends Record<PropertyKey, any> = (T extends new () => any ? PrototypeOf<T> : T),
-  K extends keyof O extends string | symbol
-  ? keyof O
-  : never = keyof O extends string | symbol
-    ? keyof O
-    : never,
-> extends WrapPropertyCore<T, O, K> {
+  O extends Record<PropertyKey, any> = (T extends new () => T ? (T extends { prototype: infer P } ? P : never) : T),
+  K extends keyof O extends string | symbol ? keyof O : never = keyof O extends string | symbol ? keyof O : never,
+  C extends boolean = boolean,
+  E extends boolean = boolean,
+  D extends WrappedPropertyDescriptor<O, K, C, E> = WrappedPropertyDescriptor<O, K, C, E>,
+> extends WrapPropertyCore<T, O, K, C, E, D> {
 
   protected get key() {
     return this.#key;
@@ -35,42 +32,30 @@ export class WrapPropertyBase<
   constructor(
     target: T,
     key: K,
-    {
-      configurable,
-      enumerable,
-      onGet,
-      onSet,
-      privateKey,
-    }: WrappedPropertyDescriptor<O, K> = {},
+    descriptor?: D,
   ) {
-    super(
-      target,
-      key,
-      { configurable, enumerable, onGet, onSet, privateKey },
-    );
-
-    // Set the private key if not provided.
-    privateKey = privateKey || `_${String(key)}`;
+    super();
+    const object = (typeof target === 'function' ? target.prototype : target) as O;
 
     // Assign the key, target, and private key.
     this.#key = key;
     this.#target = target;
-    this.#privateKey = privateKey;
+    this.#privateKey = descriptor?.privateKey || `_${String(key)}`; // Set the private key if not provided.
+
+    // Define the private property to store the value.
+    this.#hasPrivateProperty(object) === false && this.#definePrivateProperty(object, key);
   }
 
-  public getPreviousDescriptor(object: O, key: K): PropertyDescriptor | undefined {
+  protected getPreviousDescriptor(object: O, key: K): PropertyDescriptor | undefined {
     this.#previousDescriptor = !this.#previousDescriptor
-      ? Object.getOwnPropertyDescriptor(object, key)
-      : this.#previousDescriptor;
+      ? Object.getOwnPropertyDescriptor(object, key) as PropertyDescriptor
+      : this.#previousDescriptor as PropertyDescriptor;
     return this.#previousDescriptor;
   }
 
   public unwrap(): this {
-    this.wrap(
-      typeof this.target === 'function' ? this.target.prototype : this.target,
-      this.key,
-      this.#previousDescriptor
-    );
+    Object.defineProperty((typeof this.#target === 'function' ? this.#target.prototype : this.#target) as O, this.#key, this.#previousDescriptor!);
+    delete (typeof this.target === 'function' ? this.target.prototype : this.#target)[this.#privateKey];
     return this;
   }
 
@@ -113,8 +98,8 @@ export class WrapPropertyBase<
 
             // Current descriptor.
             return onGet && typeof onGet === 'function'
-                  ? onGet.call(t, key, t[privateKey as keyof O] as O[K], previousValue, t) as O[K]
-                  : t[privateKey as keyof O] as O[K];
+              ? onGet.call(t, key, t[privateKey as keyof O] as O[K], previousValue, t) as O[K]
+              : t[privateKey as keyof O] as O[K];
           }
         },
 
@@ -125,7 +110,7 @@ export class WrapPropertyBase<
             const t = (this as O);
 
             // Get the previous value from previous descriptor or current value.
-            const previousValue = (t[privateKey as keyof O] || previousDescriptor?.value) as O[K];
+            const previousValue = (t[privateKey as keyof O] || (previousDescriptor as PropertyDescriptor)?.value) as O[K];
 
             // Perform previous descriptor.
             previousDescriptor?.set && previousDescriptor.set.call(t, value);
@@ -139,5 +124,21 @@ export class WrapPropertyBase<
       }
     );
     return this;
+  }
+
+  #hasPrivateProperty(object: O): boolean {
+    return Object.hasOwn(object, this.privateKey);
+  }
+
+  #definePrivateProperty(object: O, key: K) {
+    Object.defineProperty(
+      object,
+      this.privateKey, {
+        configurable: true,
+        enumerable: false,
+        value: object[key],
+        writable: true
+      }
+    );
   }
 }
