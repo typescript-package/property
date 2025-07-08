@@ -8,6 +8,11 @@ export class TestObject {
 
 const object = new TestObject();
 
+let wrappedAge = new WrapProperty(object, 'age', { privateKey: '_age' });
+let wrappedAge1 = new WrapProperty(object, 'age', { privateKey: '__age' });
+let wrappedAge2 = new WrapProperty(object, 'age', { privateKey: '___age' });
+wrappedAge2.unwrap();
+
 let wrapped1 = new WrapProperty(
   object,
   'firstName',
@@ -24,6 +29,8 @@ let wrapped1 = new WrapProperty(
     // privateKey: '_firstName',
   }
 )
+
+wrapped1
 
 console.debug(`---`);
 
