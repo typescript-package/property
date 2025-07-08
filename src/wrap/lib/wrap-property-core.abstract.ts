@@ -1,69 +1,68 @@
-// Type.
-import { PrototypeOf } from '../../type';
 // Interface.
 import { WrappedPropertyDescriptor } from '../interface';
 
 export abstract class WrapPropertyCore<
   T extends object | (new () => any),
-  O extends Record<PropertyKey, any> = (T extends new () => T ? PrototypeOf<T> : T),
-  K extends keyof O extends string | symbol
-  ? keyof O
-  : never = keyof O extends string | symbol
-    ? keyof O
-    : never
+  O extends Record<PropertyKey, any> = (T extends new () => T ? ( T extends { prototype: infer P } ? P : never) : T),
+  K extends keyof O extends string | symbol ? keyof O : never = keyof O extends string | symbol ? keyof O : never,
+  C extends boolean = boolean,
+  E extends boolean = boolean,
+  D extends WrappedPropertyDescriptor<O, K, C, E> = WrappedPropertyDescriptor<O, K, C, E>,
 > {
-  public static configurable = true
-  public static enumerable = false
+  /**
+   * @description Defaults for configurable.
+   * @public
+   * @static
+   * @type {boolean}
+   */
+  public static configurable: boolean = true;
 
+  /**
+   * @description Defaults for enumerable.
+   * @public
+   * @static
+   * @type {boolean}
+   */
+  public static enumerable: boolean = false;
+
+  /**
+   * @description The key of the property to wrap.
+   * @protected
+   * @abstract
+   * @readonly
+   * @type {K}
+   */
   protected abstract get key(): K;
+
+  /**
+   * @description The private key used to store the value of the property.
+   * @protected
+   * @abstract
+   * @readonly
+   * @type {PropertyKey}
+   */
   protected abstract get privateKey(): PropertyKey;
+
+  /**
+   * @description The target object of the property.
+   * @protected
+   * @abstract
+   * @readonly
+   * @type {T}
+   */
   protected abstract get target(): T;
-
-  constructor(
-    target: T,
-    key: K,
-    {}: WrappedPropertyDescriptor<O, K> = {},
-  ) {
-    const object = (typeof target === 'function' ? target.prototype : target) as O;
-
-    // Define the private property to store the value.
-    this.#hasPrivateProperty(object, key) === false && this.#definePrivateProperty(object, key);
-  }
-
-  // Get the previous descriptor of the property.
-  public abstract getPreviousDescriptor(object: O, key: K): PropertyDescriptor | undefined;
-
-  // Unwrap.
+  
+  /**
+   * @description Unwraps the property using previous descriptor.
+   * @public
+   * @abstract
+   * @returns {this} 
+   */
   public abstract unwrap(): this;
 
+  // Get the previous descriptor of the property.
+  protected abstract getPreviousDescriptor(object: O, key: K): PropertyDescriptor | undefined;
+
   // Wraps the property with a private key.
-  protected abstract wrap(
-    object: O,
-    key: K, {
-      configurable,
-      enumerable,
-      onGet,
-      onSet,
-      privateKey,
-    }: WrappedPropertyDescriptor<O, K>,
-  ): this;
-
-  #definePrivateProperty(
-    object: O,
-    key: K,
-  ) {
-    Object.defineProperty(
-      object,
-      this.privateKey, {
-        configurable: false,
-        enumerable: false,
-        value: object[key],
-        writable: true
-      }
-    );
-  }
-
-  #hasPrivateProperty(object: O, key: K): boolean {
-    return Object.hasOwn(object, key);
-  }
+  protected abstract wrap(object: O, key: K, descriptor: D): this;
 }
