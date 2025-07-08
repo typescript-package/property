@@ -2,9 +2,11 @@ import { AccessorPropertyDescriptor } from '@typedly/descriptor';
 import { GetterCallback, SetterCallback } from '@typedly/callback';
 
 export interface WrappedPropertyDescriptor<
-  O extends object,
-  K extends keyof O
-> extends AccessorPropertyDescriptor<O[K]> {
+  O,
+  K extends keyof O,
+  C extends boolean = boolean,
+  E extends boolean = boolean,
+> extends AccessorPropertyDescriptor<O[K], C, E> {
   active?: boolean;
   privateKey?: PropertyKey;
   onGet?: GetterCallback<O, K>;
